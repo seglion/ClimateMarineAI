@@ -1,0 +1,15 @@
+[project]
+name = "climatemaritime"
+version = "0.1.0"
+description = "RAG for Create a Climate Marine Document"
+authors = [
+    {name = "Miguel Angel Vigo Baz",email = "vigobaz@hotmail.com"}
+]
+requires-python = ">=3.14"
+dependencies = [
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
