@@ -103,7 +103,14 @@ class MeanRegime:
         available = [perc for perc, _ in self.percentiles]
         raise KeyError(f"Percentil {p} no calculado. Disponibles: {available}")
     
-    
+@dataclass(frozen=True)
+class ExtremeRegime:
+    """Régimen Extremal escalar."""
+    estadisticos: tuple[tuple[int, float,float,float], ...]  # ((Tr,Hs,Bi,Bs), (100, 2.66, 1.5, 3.0), ...)
+    distribution: str = "maxima"
+    pot:float | None = None
+
+        
 @dataclass(frozen=True)
 class WaveRose:
     """Rosa de oleaje."""
