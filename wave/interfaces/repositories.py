@@ -27,6 +27,10 @@ class FigurePresenter(ABC):
     def wave_rose(self, rose: WaveRose, title: str, path: Path) -> Path: ...
 
     @abstractmethod
+    def extreme_wave_rose(self, rose: WaveRose, title: str, path: Path) -> Path: ...
+
+
+    @abstractmethod
     def mean_regime(
         self, regime: MeanRegime, hs_data: ..., path: Path
     ) -> Path: ...
