@@ -86,10 +86,13 @@ class AnalyzeWaves:
                 f"Rosa de oleaje extremo — {series.source_id}",
                 output_dir / "rosa_oleaje_extremo.png",
             ),
-            "extreme_regime": self._figures.extreme_regime(
-                extreme_regime_bm,
-                extreme_regime_pot,
-                output_dir / "regimen_extremal.png",
+            "extreme_regime_bm": self._eva.plot_return_values_bm(
+                series,
+                output_dir / "regimen_extremal_bm.png",
+            ),
+            "extreme_regime_pot": self._eva.plot_return_values_pot(
+                series,
+                output_dir / "regimen_extremal_pot.png",
             ),
         }
 
@@ -115,11 +118,9 @@ class AnalyzeWaves:
     def _filter_above(
         series: WaveTimeSeries, threshold: float
     ) -> WaveTimeSeries:
+        indices = np.where((series.hs >= threshold) & ~np.isnan(series.hs))[0]
         return WaveTimeSeries(
-            records=tuple(
-                r for r in series.records
-                if not np.isnan(r.hs) and r.hs >= threshold
-            ),
+            records=tuple(series.records[i] for i in indices),
             source_id=series.source_id,
             longitude=series.longitude,
             latitude=series.latitude,
@@ -184,20 +185,19 @@ class AnalyzeWaves:
         valid = ~np.isnan(hs) & ~np.isnan(dirs)
         n_valid = int(np.sum(valid))
 
-        dist = []
-        for sector in sectors:
-            sector_mask = np.array([
-                DirectionSector.from_degrees(d) == sector
-                for d in dirs
-            ]) & valid
+        hs_v   = hs[valid]
+        dirs_v = dirs[valid]
 
-            row = []
-            hs_sector = hs[sector_mask]
-            for i in range(len(hs_bins) - 1):
-                lo, hi = hs_bins[i], hs_bins[i + 1]
-                count = np.sum((hs_sector >= lo) & (hs_sector < hi))
-                row.append(float(count / n_valid * 100) if n_valid > 0 else 0.0)
-            dist.append(tuple(row))
+        # Asigna cada dirección a un índice de sector (0-15) vectorizado,
+        # evitando 16×n llamadas Python a from_degrees().
+        sector_idx = np.round(dirs_v / 22.5).astype(int) % 16
+
+        bins_arr = np.array(hs_bins)
+        dist = []
+        for i in range(len(sectors)):
+            counts = np.histogram(hs_v[sector_idx == i], bins=bins_arr)[0]
+            row = tuple(float(c / n_valid * 100) if n_valid > 0 else 0.0 for c in counts)
+            dist.append(row)
 
         return WaveRose(
             sectors=tuple(sectors),

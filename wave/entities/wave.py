@@ -46,6 +46,12 @@ class WaveTimeSeries:
     latitude: float
     source_type: str = "unknown"
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "_hs",  np.array([r.hs  for r in self.records], dtype=float))
+        object.__setattr__(self, "_tp",  np.array([r.tp  for r in self.records], dtype=float))
+        object.__setattr__(self, "_dir", np.array([r.dir for r in self.records], dtype=float))
+        object.__setattr__(self, "_timestamps", [r.timestamp for r in self.records])
+
     @property
     def size(self) -> int:
         return len(self.records)
@@ -60,19 +66,19 @@ class WaveTimeSeries:
 
     @property
     def hs(self) -> np.ndarray:
-        return np.array([r.hs for r in self.records])
+        return self._hs  # type: ignore[attr-defined]
 
     @property
     def tp(self) -> np.ndarray:
-        return np.array([r.tp for r in self.records])
+        return self._tp  # type: ignore[attr-defined]
 
     @property
     def directions(self) -> np.ndarray:
-        return np.array([r.dir for r in self.records])
+        return self._dir  # type: ignore[attr-defined]
 
     @property
     def timestamps(self) -> list[datetime]:
-        return [r.timestamp for r in self.records]
+        return self._timestamps  # type: ignore[attr-defined]
 
     @property
     def n_valid(self) -> int:

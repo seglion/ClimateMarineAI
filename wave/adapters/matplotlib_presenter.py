@@ -67,13 +67,6 @@ class MatplotlibPresenter(FigurePresenter):
 
             ax.scatter(x1, np.log10(y1), s=20, c='red', alpha=0.5, zorder=3)
 
-            # ajuste lognormal: log10(Hs) = (mu + sigma*z) / ln(10)
-            z = np.linspace(x1.min(), x1.max(), 300)
-            ax.plot(z, (regime.mu + regime.sigma * z) / np.log(10),
-                    'b-', linewidth=1.5, label='Población 1')
-            ax.plot(z, (regime.mu_2 + regime.sigma_2 * z) / np.log(10),
-                    'g-', linewidth=1.5, label='Población 2')
-
             ax.grid(which='both', linestyle=':', linewidth=1)
             ax.set_xlim(-2, scipy_stats.norm.ppf(0.999999, loc=0, scale=1))
             ax.set_ylim(np.log10(0.5), np.log10(np.max(y1)) + 0.05 * np.log10(np.max(y1)))
@@ -83,54 +76,12 @@ class MatplotlibPresenter(FigurePresenter):
             ax.set_yticklabels(yticks)
             ax.set_xlabel('Probabilidad de no excedencia', fontweight='bold')
             ax.set_ylabel('Hs(m)', fontweight='bold')
-            ax.legend()
 
             fig.savefig(path, dpi=300)
             plt.close(fig)
 
         return path
 
-    def extreme_regime(
-        self,
-        regime_bm: ExtremeRegime,
-        regime_pot: ExtremeRegime,
-        path: Path,
-    ) -> Path:
-        with plt.rc_context(_STYLE):
-            tr_bm  = [s[0] for s in regime_bm.estadisticos]
-            hs_bm  = np.array([s[1] for s in regime_bm.estadisticos])
-            lo_bm  = np.array([s[2] for s in regime_bm.estadisticos])
-            hi_bm  = np.array([s[3] for s in regime_bm.estadisticos])
-
-            tr_pot = [s[0] for s in regime_pot.estadisticos]
-            hs_pot = np.array([s[1] for s in regime_pot.estadisticos])
-            lo_pot = np.array([s[2] for s in regime_pot.estadisticos])
-            hi_pot = np.array([s[3] for s in regime_pot.estadisticos])
-
-            fig, ax = plt.subplots(figsize=(15, 8))
-
-            ax.errorbar(tr_bm, hs_bm,
-                        yerr=[hs_bm - lo_bm, hi_bm - hs_bm],
-                        fmt='-ob', label='BM (GEV)')
-            ax.fill_between(tr_bm, lo_bm, hi_bm, color='b', alpha=0.2)
-
-            pot_label = f'POT (umbral = {regime_pot.pot:.2f} m)' if regime_pot.pot else 'POT'
-            ax.errorbar(tr_pot, hs_pot,
-                        yerr=[hs_pot - lo_pot, hi_pot - hs_pot],
-                        fmt='-or', label=pot_label)
-            ax.fill_between(tr_pot, lo_pot, hi_pot, color='r', alpha=0.2)
-
-            ax.set_xscale('log')
-            ax.grid(True, which='both', linestyle='--', linewidth=1)
-            ax.set_xlabel('Periodo de retorno (años)', fontweight='bold')
-            ax.set_ylabel('Hs(m)', fontweight='bold')
-            ax.set_title('Hs: BM (GEV) vs POT — IC 95%')
-            ax.legend()
-
-            fig.savefig(path, dpi=300)
-            plt.close(fig)
-
-        return path
 
     @staticmethod
     def _plot_rose(

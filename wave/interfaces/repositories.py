@@ -37,10 +37,6 @@ class FigurePresenter(ABC):
         self, regime: MeanRegime, hs_data: np.ndarray, path: Path
     ) -> Path: ...
     
-    @abstractmethod
-    def extreme_regime(
-        self, regime_bm: ExtremeRegime, regime_pot: ExtremeRegime, path: Path
-    ) -> Path: ...
 
 
 class ExtremeValueFitter(ABC):
@@ -59,3 +55,9 @@ class ExtremeValueFitter(ABC):
         threshold_percentile: float,
         return_periods: tuple[int, ...],
     ) -> ExtremeRegime: ...
+
+    @abstractmethod
+    def plot_return_values_bm(self, series: WaveTimeSeries, path: Path) -> Path: ...
+
+    @abstractmethod
+    def plot_return_values_pot(self, series: WaveTimeSeries, path: Path) -> Path: ...

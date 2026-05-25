@@ -172,3 +172,5 @@ pyrightconfig.json
 .gitignore
 Re.py
 pyAnalisysWave.py
+*.csv
+*test*
