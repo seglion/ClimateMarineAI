@@ -117,7 +117,7 @@ class WaveRose:
     sectors: tuple[DirectionSector, ...]
     hs_bins: tuple[float, ...]
     distribution: tuple[tuple[float, ...], ...]  # [n_sectors × n_bins]
-
+    threshold: float | None = None  # None = rosa completa, valor = percentil de corte
     @property
     def sector_frequencies(self) -> tuple[float, ...]:
         return tuple(sum(row) for row in self.distribution)
