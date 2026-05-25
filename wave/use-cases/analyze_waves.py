@@ -14,12 +14,11 @@ import numpy as np
 from entities.wave import (
     DirectionSector,
     MeanRegime,
-    WaveRecord,
     WaveRose,
     WaveTimeSeries,
     ExtremeRegime)
 
-from interfaces.repositories import WaveRepository, FigurePresenter
+from interfaces.repositories import WaveRepository, FigurePresenter, ExtremeValueFitter
 
 
 @dataclass
@@ -27,7 +26,8 @@ class WaveAnalysisResult:
     """Resultados."""
     series: WaveTimeSeries
     mean_regime: MeanRegime
-    extreme_regime: ExtremeRegime
+    extreme_regime_bm: ExtremeRegime
+    extreme_regime_pot: ExtremeRegime
     rose: WaveRose
     extreme_rose: WaveRose
     figures: dict[str, Path]
@@ -45,9 +45,11 @@ class AnalyzeWaves:
         self,
         wave_repo: WaveRepository,
         figure_presenter: FigurePresenter,
+        extreme_fitter: ExtremeValueFitter,
     ):
         self._repo = wave_repo
         self._figures = figure_presenter
+        self._eva = extreme_fitter
 
     def execute(
         self,
@@ -62,7 +64,10 @@ class AnalyzeWaves:
         # 2. Calcular
         mean_regime = self._compute_mean_regime(series, percentiles)
         rose = self._compute_wave_rose(series)
-        extreme_rose = self._compute_extreme_wave_rose(series,threshold=mean_regime.percentiles[-4][1])
+        extreme_rose = self._compute_extreme_wave_rose(series, threshold=mean_regime.percentiles[-4][1])
+        extreme_regime_bm = self._eva.fit_block_maxima(series, return_periods=(2, 5, 10, 25, 50, 100, 200, 500))
+        extreme_regime_pot = self._eva.fit_pot(series, threshold_percentile=99.5, return_periods=(2, 5, 10, 25, 50, 100, 200, 500))
+
         # 3. Generar figuras
         output_dir.mkdir(parents=True, exist_ok=True)
         figures = {
@@ -81,11 +86,18 @@ class AnalyzeWaves:
                 f"Rosa de oleaje extremo — {series.source_id}",
                 output_dir / "rosa_oleaje_extremo.png",
             ),
+            "extreme_regime": self._figures.extreme_regime(
+                extreme_regime_bm,
+                extreme_regime_pot,
+                output_dir / "regimen_extremal.png",
+            ),
         }
 
         return WaveAnalysisResult(
             series=series,
             mean_regime=mean_regime,
+            extreme_regime_bm=extreme_regime_bm,
+            extreme_regime_pot=extreme_regime_pot,
             rose=rose,
             extreme_rose=extreme_rose,
             figures=figures,
@@ -98,10 +110,6 @@ class AnalyzeWaves:
         """Hs sin NaN, listo para operar."""
         hs = series.hs
         return hs[~np.isnan(hs)]
-
-    @staticmethod
-    def _percentile(hs: np.ndarray, p: float) -> float:
-        return float(np.nanpercentile(hs, p))
 
     @staticmethod
     def _filter_above(
@@ -117,17 +125,6 @@ class AnalyzeWaves:
             latitude=series.latitude,
             source_type=series.source_type,
         )
-
-    @staticmethod
-    def _annual_maxima(series: WaveTimeSeries) -> list[WaveRecord]:
-        by_year: dict[int, WaveRecord] = {}
-        for r in series.records:
-            if np.isnan(r.hs):
-                continue
-            year = r.timestamp.year
-            if year not in by_year or r.hs > by_year[year].hs:
-                by_year[year] = r
-        return [by_year[y] for y in sorted(by_year)]
 
     # ── Cálculos estadísticos ──
 
@@ -219,3 +216,4 @@ class AnalyzeWaves:
         t = float(np.round(threshold))
         hs_bins = tuple(float(x) for x in np.arange(t, max_hs, step)) + (99.0,)
         return AnalyzeWaves._compute_wave_rose(filtered, hs_bins)
+
