@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
-from scipy import stats as scipy_stats
 
 from entities.wave import (
     DirectionSector,
@@ -28,8 +27,9 @@ class WaveAnalysisResult:
     """Resultados."""
     series: WaveTimeSeries
     mean_regime: MeanRegime
-    rose: WaveRose
     extreme_regime: ExtremeRegime
+    rose: WaveRose
+    extreme_rose: WaveRose
     figures: dict[str, Path]
 
 
@@ -62,7 +62,7 @@ class AnalyzeWaves:
         # 2. Calcular
         mean_regime = self._compute_mean_regime(series, percentiles)
         rose = self._compute_wave_rose(series)
-
+        extreme_rose = self._compute_extreme_wave_rose(series,threshold=mean_regime.percentiles[-4][1])
         # 3. Generar figuras
         output_dir.mkdir(parents=True, exist_ok=True)
         figures = {
@@ -76,12 +76,18 @@ class AnalyzeWaves:
                 self._valid_hs(series),
                 output_dir / "regimen_medio.png",
             ),
+            "extreme_wave_rose": self._figures.extreme_wave_rose(
+                extreme_rose,
+                f"Rosa de oleaje extremo — {series.source_id}",
+                output_dir / "rosa_oleaje_extremo.png",
+            ),
         }
 
         return WaveAnalysisResult(
             series=series,
             mean_regime=mean_regime,
             rose=rose,
+            extreme_rose=extreme_rose,
             figures=figures,
         )
 
@@ -129,21 +135,45 @@ class AnalyzeWaves:
     def _compute_mean_regime(
         series: WaveTimeSeries,
         percentiles: tuple[float, ...],
+        discretizacion: float = 0.02,
+        split_percentile: float = 80.0,
     ) -> MeanRegime:
-        """Ajuste log-normal al régimen medio de Hs."""
         hs = series.hs[~np.isnan(series.hs)]
         hs = hs[hs > 0]
 
-        log_hs = np.log(hs)
-        mu = float(np.mean(log_hs))
-        sigma = float(np.std(log_hs, ddof=1))
+        bins = np.arange(hs.min(), hs.max(), discretizacion)
+        N = np.histogram(hs, bins=bins)[0]
+        centers = (bins[:-1] + bins[1:]) / 2
+        bin_width = float(centers[1] - centers[0])
 
-        dist = scipy_stats.lognorm(s=sigma, scale=np.exp(mu))
+        area = float(np.sum(bin_width * N))
+        n = N / area
+        P1 = np.cumsum(bin_width * n)
+        P11 = P1[:-1]
+        y1 = centers[:-1]
+
         computed = tuple(
-            (p, float(dist.ppf(p / 100))) for p in percentiles
+            (p, float(np.interp(p / 100, P11, y1))) for p in percentiles
         )
 
-        return MeanRegime(percentiles=computed, mu=mu, sigma=sigma)
+        # población 1: datos por debajo del percentil de corte (mar ordinario)
+        split = float(np.nanpercentile(hs, split_percentile))
+        hs_low = hs[hs <= split]
+        log_low = np.log(hs_low)
+        mu = float(np.mean(log_low))
+        sigma = float(np.std(log_low, ddof=1))
+
+        # población 2: cola superior (temporal / swell extremo)
+        hs_high = hs[hs > split]
+        log_high = np.log(hs_high)
+        mu_2 = float(np.mean(log_high))
+        sigma_2 = float(np.std(log_high, ddof=1))
+
+        return MeanRegime(
+            percentiles=computed,
+            mu=mu, sigma=sigma,
+            mu_2=mu_2, sigma_2=sigma_2,
+        )
 
     @staticmethod
     def _compute_wave_rose(
@@ -177,3 +207,15 @@ class AnalyzeWaves:
             hs_bins=hs_bins,
             distribution=tuple(dist),
         )
+
+    @staticmethod
+    def _compute_extreme_wave_rose(
+        series: WaveTimeSeries,
+        threshold: float,
+        step: float = 1.0,
+        max_hs: float = 12.0,
+    ) -> WaveRose:
+        filtered = AnalyzeWaves._filter_above(series, threshold)
+        t = float(np.round(threshold))
+        hs_bins = tuple(float(x) for x in np.arange(t, max_hs, step)) + (99.0,)
+        return AnalyzeWaves._compute_wave_rose(filtered, hs_bins)

@@ -92,8 +92,8 @@ class MeanRegime:
     percentiles: tuple[tuple[float, float], ...]  # ((50, 1.04), (95, 2.66), ...)
     mu: float
     sigma: float
-    mu_2: float
-    sigma_2: float
+    mu_2: float = 0.0
+    sigma_2: float = 0.0
     distribution: str = "lognormal"
 
     def hs_at(self, p: float) -> float:
