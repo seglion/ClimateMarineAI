@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from pathlib import Path
+
+import numpy as np
 
 from entities.calibration import CalibrationData, CalibrationResult
 
@@ -30,3 +33,25 @@ class CalibrationFitter(ABC):
         n_nodes: int = 8,
         sector_width: float = 90.0,
     ) -> CalibrationResult: ...
+
+
+class CalibrationPresenter(ABC):
+    """Genera las figuras diagnósticas de la calibración."""
+
+    @abstractmethod
+    def cdf(
+        self,
+        data: CalibrationData,
+        model: CalibrationResult,
+        hs_calibrated: np.ndarray,
+        path: Path,
+    ) -> Path:
+        """CDF empírica: instrumental, reanálisis y calibrado con banda IC95%."""
+
+    @abstractmethod
+    def parameters_polar(self, model: CalibrationResult, path: Path) -> Path:
+        """Rosa polar de alpha(θ) y beta(θ) con banda IC95%."""
+
+    @abstractmethod
+    def parameters_table(self, model: CalibrationResult, path: Path) -> Path:
+        """Tabla de alpha y beta ± IC95% por nodo direccional."""
