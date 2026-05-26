@@ -31,10 +31,14 @@ class FigurePresenter(ABC):
     @abstractmethod
     def extreme_wave_rose(self, rose: WaveRose, title: str, path: Path) -> Path: ...
 
-
     @abstractmethod
     def mean_regime(
         self, regime: MeanRegime, hs_data: np.ndarray, path: Path
+    ) -> Path: ...
+
+    @abstractmethod
+    def bivariate_distribution(
+        self, hs: np.ndarray, tp: np.ndarray, path: Path
     ) -> Path: ...
     
 

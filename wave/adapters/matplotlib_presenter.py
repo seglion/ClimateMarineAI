@@ -5,6 +5,7 @@ from pathlib import Path
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 from scipy import stats as scipy_stats
 
 from entities.wave import ExtremeRegime, MeanRegime, WaveRose
@@ -82,6 +83,42 @@ class MatplotlibPresenter(FigurePresenter):
 
         return path
 
+
+    def bivariate_distribution(
+        self, hs: np.ndarray, tp: np.ndarray, path: Path
+    ) -> Path:
+        valid = ~np.isnan(hs) & ~np.isnan(tp)
+        hs_v, tp_v = hs[valid], tp[valid]
+        n = len(hs_v)
+
+        with plt.rc_context(_STYLE):
+            joint_kws = dict(gridsize=20)
+            g = sns.jointplot(
+                x=hs_v, y=tp_v,
+                color='#363842',
+                kind='hex',
+                space=0,
+                height=10,
+                ratio=5,
+                joint_kws=joint_kws,
+            )
+            g.ax_joint.set_xlabel('Hs (m)', fontweight='bold')
+            g.ax_joint.set_ylabel('Tp (s)', fontweight='bold')
+            g.ax_joint.grid(alpha=0.4)
+
+            plt.subplots_adjust(left=0.1, right=0.8, top=0.9, bottom=0.1)
+            cbar_ax = g.fig.add_axes([0.85, 0.25, 0.02, 0.4])
+            cbar = plt.colorbar(
+                g.ax_joint.collections[0], cax=cbar_ax
+            )
+            ticks = cbar.ax.get_yticks()
+            cbar.ax.set_yticklabels([f'{v / n:.4f}' for v in ticks])
+            cbar.set_label('Frecuencia', fontsize=12, fontweight='bold')
+
+            g.fig.savefig(path, dpi=150)
+            plt.close(g.fig)
+
+        return path
 
     @staticmethod
     def _plot_rose(

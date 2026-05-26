@@ -86,3 +86,4 @@ class DocumentResult:
     path: Path
     placeholders_filled: int
     placeholders_skipped: list[str] = field(default_factory=list)
+

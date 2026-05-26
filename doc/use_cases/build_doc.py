@@ -110,4 +110,5 @@ class BuildDoc:
             extreme_pot_fig=Path(figs["extreme_regime_pot"]),
             wave_rose_fig=Path(figs["wave_rose"]),
             extreme_wave_rose_fig=Path(figs["extreme_wave_rose"]),
+            bivariate_distribution_fig=Path(figs["bivariate_distribution"]),
         )

@@ -94,6 +94,11 @@ class AnalyzeWaves:
                 series,
                 output_dir / "regimen_extremal_pot.png",
             ),
+            "bivariate_distribution": self._figures.bivariate_distribution(
+                series.hs,
+                series.tp,
+                output_dir / "distribucion_conjunta.png",
+            ),
         }
 
         return WaveAnalysisResult(
