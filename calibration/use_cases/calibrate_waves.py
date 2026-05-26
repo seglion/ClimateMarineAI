@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from entities.calibration import CalibrationData, CalibrationResult
-from interfaces.repositories import CalibrationFitter, InstrumentalRepository
+from interfaces.calibration import CalibrationFitter, InstrumentalRepository
 
 
 @dataclass

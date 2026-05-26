@@ -7,6 +7,8 @@ Uso típico (añadir wave/ y calibration/ a sys.path antes de importar):
     from use_cases.calibrate_waves import CalibrateWaves
     from adapters.scipy_fitter import ScipyCalibrationFitter
     from adapters.buoy_repository import PuertosEstadoBuoyRepository
+    # La interfaz vive en interfaces.calibration (no interfaces.repositories)
+    # para evitar colisión de namespace con wave/interfaces/repositories.py
 
     # 1. Cargar reanálisis (SIMAR, GOW, ERA5…)
     simar = simar_repo.load("3002002")

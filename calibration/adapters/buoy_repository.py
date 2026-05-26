@@ -7,7 +7,7 @@ import pandas as pd
 
 from entities.calibration import CalibrationData
 from entities.wave import WaveTimeSeries
-from interfaces.repositories import InstrumentalRepository
+from interfaces.calibration import InstrumentalRepository
 
 _NULL = -9999.9
 

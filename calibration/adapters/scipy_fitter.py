@@ -14,7 +14,7 @@ from entities.calibration import (
     CalibrationResult,
     ConfidenceIntervals,
 )
-from interfaces.repositories import CalibrationFitter
+from interfaces.calibration import CalibrationFitter
 
 
 class ScipyCalibrationFitter(CalibrationFitter):
