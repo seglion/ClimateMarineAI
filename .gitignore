@@ -174,3 +174,5 @@ Re.py
 pyAnalisysWave.py
 *.csv
 *test*
+/documents
+miguez.py
